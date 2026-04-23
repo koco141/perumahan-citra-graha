@@ -124,7 +124,18 @@ const BeritaDetail = () => {
         .bd-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.8)); }
         
         .bd-hero-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px; color: white; }
-        .bd-title { font-size: 2.5rem; font-weight: 900; margin: 15px 0; line-height: 1.2; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .bd-title { 
+          font-size: 2.5rem; 
+          font-weight: 900; 
+          margin: 15px 0; 
+          line-height: 1.3; 
+          color: #1e293b; 
+          background: white; 
+          display: inline-block; 
+          padding: 8px 20px; 
+          border-radius: 12px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
         
         .bd-meta { display: flex; gap: 20px; opacity: 0.9; }
         .bd-meta-item { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: 600; }
