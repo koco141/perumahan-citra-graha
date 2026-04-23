@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  const validateToken = async (t) => {
     try {
       const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://localhost:5000/api' 
@@ -31,7 +32,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error("Auth validation failed:", err);
-      // Don't logout on network error, keep current local state
     } finally {
       setLoading(false);
     }
