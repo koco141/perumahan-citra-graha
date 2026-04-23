@@ -373,6 +373,11 @@ app.post('/api/security-tasks/toggle', async (req, res) => {
 });
 
 // ── START ──────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`✅ Server Citragraha running on port ${PORT}`);
-});
+// START (Hanya jalan di lokal, Vercel akan otomatis handle exports)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`✅ Server Citragraha running on port ${PORT}`);
+  });
+}
+
+export default app;
