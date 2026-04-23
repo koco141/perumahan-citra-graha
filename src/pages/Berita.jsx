@@ -1,0 +1,407 @@
+import React, { useState, useEffect } from 'react';
+import { fetchNews, saveNews, deleteNews } from '../api/api';
+import { useAuth } from '../context/AuthContext';
+
+const Berita = () => {
+  const [activeFilter, setActiveFilter] = useState('Semua');
+  const categories = ['Semua', 'Pengumuman', 'Kegiatan', 'Warga'];
+
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  const { user } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDelModalOpen, setIsDelModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedNews, setSelectedNews] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const canManage = user?.role === 'pengurus' || user?.role === 'superadmin';
+  const [formData, setFormData] = useState({ title: '', category: 'Pengumuman', desc: '', img: '' });
+  const [error, setError] = useState('');
+
+  // ── PERSISTENCE: API ───────────────────────────────────────────────────────
+  useEffect(() => {
+    loadNews();
+  }, []);
+
+  const loadNews = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchNews();
+      setNews(data || []);
+    } catch (err) {
+      console.error("Load failed:", err);
+      setError("Gagal memuat berita");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  const filteredNews = activeFilter === 'Semua' 
+    ? news 
+    : news.filter(item => item.category === activeFilter);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1024 * 1024) {
+        setError('⚠️ Ukuran foto terlalu besar! Maksimal 1 MB agar sistem tetap ringan.');
+        e.target.value = ''; // Reset input
+        setFormData({ ...formData, img: '' });
+        return;
+      }
+      setError('');
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, img: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData({ title: '', category: 'Pengumuman', desc: '', img: '' });
+    setError('');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (item) => {
+    setEditingId(item.id);
+    setFormData({ title: item.title, category: item.category, desc: item.desc, img: item.img });
+    setError('');
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = (id) => {
+    setItemToDelete(id);
+    setIsDelModalOpen(true);
+  };
+
+  const openDetail = (item) => {
+    setSelectedNews(item);
+    setIsDetailOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteNews(itemToDelete);
+      await loadNews();
+      setIsDelModalOpen(false);
+      setItemToDelete(null);
+    } catch (err) {
+      setError("Gagal menghapus berita");
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.title || !formData.desc || !formData.img) {
+      setError('Semua field harus diisi!');
+      return;
+    }
+
+    const newsData = {
+      id: editingId || String(Date.now()),
+      ...formData,
+      date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    };
+
+    try {
+      const res = await saveNews(newsData);
+      if (res.error) throw new Error("API error");
+      await loadNews();
+      setIsModalOpen(false);
+      setEditingId(null);
+      setFormData({ title: '', category: 'Pengumuman', desc: '', img: '' });
+      setError('');
+    } catch (err) {
+      setError("Gagal menyimpan berita. Periksa koneksi server.");
+    }
+  };
+
+  return (
+    <div className="berita-container">
+      {/* HEADER SECTION */}
+      <div className="b-header">
+        <div className="b-header-overlay"></div>
+        <div className="b-header-content">
+          <span className="b-badge">Info & Kabar Terkini</span>
+          <h1>Berita & Pengumuman</h1>
+          <p>Informasi terbaru dari lingkungan Perumahan Citragraha Tembung untuk seluruh warga.</p>
+          {canManage && <button className="btn-add-news" onClick={openAddModal}>+ Tambah Berita</button>}
+        </div>
+      </div>
+
+      <div className="b-body">
+        {/* FILTERS */}
+        <div className="b-filters-row">
+          <div className="b-filters">
+            {categories.map(cat => (
+              <button 
+                key={cat} 
+                className={`b-filter-btn ${activeFilter === cat ? 'active' : ''}`}
+                onClick={() => setActiveFilter(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* NEWS GRID */}
+        <div className="b-grid">
+          {filteredNews.map(item => (
+            <div key={item.id} className="news-card">
+              <div className="nc-img-wrap">
+                <div className="nc-img" style={{backgroundImage: `url(${item.img})`}}></div>
+                <span className={`nc-cat ${item.category.toLowerCase()}`}>{item.category}</span>
+              </div>
+              <div className="nc-content">
+                <span className="nc-date">📅 {item.date}</span>
+                <h3 className="nc-title">{item.title}</h3>
+                <p className="nc-desc">{item.desc}</p>
+                <div className="nc-footer">
+                  <button className="nc-btn" onClick={() => openDetail(item)}>Baca Selengkapnya →</button>
+                  {canManage && (
+                    <div className="nc-actions">
+                      <button className="nc-edit" onClick={() => openEditModal(item)}>✏️</button>
+                      <button className="nc-del" onClick={() => confirmDelete(item.id)}>🗑️</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* EMPTY STATE */}
+        {filteredNews.length === 0 && (
+          <div className="b-empty">
+            <div className="be-icon">📝</div>
+            <h3>Belum ada berita</h3>
+            <p>Tidak ada berita dalam kategori "{activeFilter}" saat ini.</p>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL FORM */}
+      {isModalOpen && (
+        <div className="b-modal-overlay">
+          <div className="b-modal">
+            <div className="bm-header">
+              <h2>Tambah Berita Baru</h2>
+              <button onClick={() => setIsModalOpen(false)}>✕</button>
+            </div>
+            <form onSubmit={handleSubmit} className="bm-form">
+              {error && <div className="bm-error">{error}</div>}
+              
+              <div className="form-group">
+                <label>Judul Berita</label>
+                <input 
+                  type="text" 
+                  placeholder="Contoh: Kerja Bakti Blok A"
+                  value={formData.title}
+                  onChange={e => setFormData({...formData, title: e.target.value})}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Kategori</label>
+                  <select 
+                    value={formData.category}
+                    onChange={e => setFormData({...formData, category: e.target.value})}
+                  >
+                    <option value="Pengumuman">Pengumuman</option>
+                    <option value="Kegiatan">Kegiatan</option>
+                    <option value="Warga">Warga</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Gambar Berita</label>
+                  <input type="file" accept="image/*" onChange={handleFileChange} />
+                  <small style={{color: '#64748b', fontSize: '0.7rem', marginTop: '4px', fontWeight: 600}}>* Maksimal 1 MB (PNG/JPG)</small>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Isi Singkat / Deskripsi</label>
+                <textarea 
+                  rows="4" 
+                  placeholder="Jelaskan detail pengumuman atau berita..."
+                  value={formData.desc}
+                  onChange={e => setFormData({...formData, desc: e.target.value})}
+                ></textarea>
+              </div>
+
+              <div className="bm-actions">
+                <button type="button" className="btn-cancel" onClick={() => setIsModalOpen(false)}>Batal</button>
+                <button type="submit" className="btn-save">Simpan Berita</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DETAIL MODAL */}
+      {isDetailOpen && selectedNews && (
+        <div className="b-modal-overlay" onClick={() => setIsDetailOpen(false)}>
+          <div className="b-modal detail-modal" onClick={e => e.stopPropagation()}>
+            <div className="dm-header">
+              <button className="dm-close" onClick={() => setIsDetailOpen(false)}>✕</button>
+              <div className="dm-img" style={{backgroundImage: `url(${selectedNews.img})`}}></div>
+              <span className={`nc-cat ${selectedNews.category.toLowerCase()}`}>{selectedNews.category}</span>
+            </div>
+            <div className="dm-body">
+              <span className="nc-date">📅 {selectedNews.date}</span>
+              <h2 className="dm-title">{selectedNews.title}</h2>
+              <div className="dm-content">
+                {selectedNews.desc.split('\n').map((para, i) => (
+                  <p key={i}>{para}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {isDelModalOpen && (
+        <div className="b-modal-overlay">
+          <div className="b-modal del-modal">
+            <div className="dm-icon">⚠️</div>
+            <h2>Hapus Berita?</h2>
+            <p>Berita yang dihapus tidak dapat dikembalikan. Apakah Anda yakin?</p>
+            <div className="dm-actions">
+              <button className="btn-cancel" onClick={() => setIsDelModalOpen(false)}>Batal</button>
+              <button className="btn-del-confirm" onClick={handleDelete}>Ya, Hapus</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .berita-container { min-height: 100vh; background: #f8fafc; padding-bottom: 80px; }
+        
+        .b-header {
+          height: 400px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #1a6b5c;
+          background-image: url('https://images.unsplash.com/photo-1504711432869-e74e83881c9c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+          background-size: cover;
+          background-position: center;
+          color: white;
+          text-align: center;
+        }
+        .b-header-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(26,107,92,0.7), rgba(26,107,92,0.9)); }
+        .b-header-content { position: relative; z-index: 10; max-width: 800px; padding: 0 24px; }
+        .b-badge { background: #ffd700; color: #1a6b5c; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: inline-block; }
+        .b-header h1 { font-size: 3.5rem; font-weight: 900; margin: 10px 0; letter-spacing: -1.5px; color: #ffffff; text-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .b-header p { font-size: 1.2rem; opacity: 1; font-weight: 600; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        .btn-add-news { margin-top: 24px; background: #fff; color: #1a6b5c; padding: 12px 28px; border-radius: 12px; border: none; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .btn-add-news:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+
+        .b-body { max-width: 1200px; margin: -50px auto 0; position: relative; z-index: 20; padding: 0 24px; }
+        
+        .b-filters-row { display: flex; align-items: center; justify-content: center; margin-bottom: 32px; }
+        .b-filters { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .b-filter-btn { padding: 12px 24px; background: white; border: 1px solid #e2e8f0; border-radius: 14px; font-size: 0.9rem; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .b-filter-btn:hover { border-color: #1a6b5c; color: #1a6b5c; transform: translateY(-2px); }
+        .b-filter-btn.active { background: #1a6b5c; color: white; border-color: #1a6b5c; box-shadow: 0 10px 20px rgba(26,107,92,0.2); }
+
+        .b-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 32px; }
+        
+        .news-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; transition: all 0.3s; display: flex; flex-direction: column; }
+        .news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); border-color: #1a6b5c; }
+        
+        .nc-img-wrap { height: 220px; overflow: hidden; position: relative; }
+        .nc-img { width: 100%; height: 100%; background-size: cover; background-position: center; transition: transform 0.5s; }
+        .news-card:hover .nc-img { transform: scale(1.1); }
+        .nc-cat { position: absolute; top: 16px; left: 16px; padding: 6px 14px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: white; z-index: 2; }
+        .nc-cat.pengumuman { background: #ef4444; }
+        .nc-cat.kegiatan { background: #3b82f6; }
+        .nc-cat.warga { background: #10b981; }
+
+        .nc-content { padding: 24px; flex-grow: 1; display: flex; flex-direction: column; }
+        .nc-date { font-size: 0.75rem; color: #94a3b8; font-weight: 700; display: block; margin-bottom: 12px; }
+        .nc-title { font-size: 1.25rem; font-weight: 800; color: #1e293b; margin: 0 0 12px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .nc-desc { font-size: 0.9rem; color: #64748b; margin: 0 0 20px 0; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; flex-grow: 1; }
+        
+        .nc-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .nc-btn { padding: 0; background: none; border: none; color: #1a6b5c; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; width: fit-content; transition: 0.2s; }
+        .nc-btn:hover { gap: 8px; }
+        
+        .nc-actions { display: flex; gap: 8px; }
+        .nc-edit { background: #e8f8f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; color: #1a6b5c; font-size: 0.9rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .nc-edit:hover { background: #1a6b5c; color: white; }
+        .nc-del { background: #fee2e2; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; color: #ef4444; font-size: 0.9rem; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .nc-del:hover { background: #ef4444; color: white; }
+
+        /* MODAL */
+        .b-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .b-modal { background: white; width: 100%; max-width: 600px; border-radius: 24px; padding: 32px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); animation: modalIn 0.3s ease-out; }
+        @keyframes modalIn { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .bm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .bm-header h2 { font-size: 1.5rem; font-weight: 900; color: #1a6b5c; margin: 0; }
+        .bm-header button { background: #f1f5f9; border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-weight: 700; color: #64748b; }
+        
+        .bm-form { display: flex; flex-direction: column; gap: 20px; }
+        .bm-error { background: #fee2e2; color: #ef4444; padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; }
+        
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-size: 0.85rem; font-weight: 700; color: #4a5568; }
+        .form-group input, .form-group select, .form-group textarea { padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 0.95rem; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1a6b5c; box-shadow: 0 0 0 3px rgba(26,107,92,0.1); }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
+        
+        .bm-actions { display: flex; gap: 12px; margin-top: 10px; }
+        .btn-cancel { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; font-weight: 700; color: #64748b; cursor: pointer; }
+        .btn-save { flex: 2; padding: 14px; border-radius: 12px; border: none; background: #1a6b5c; color: white; font-weight: 800; cursor: pointer; }
+        .btn-save:hover { background: #145248; }
+
+        /* DELETE CONFIRM MODAL */
+        .del-modal { max-width: 400px; text-align: center; }
+        .dm-icon { font-size: 3rem; margin-bottom: 16px; }
+        .del-modal h2 { color: #991b1b; }
+        .del-modal p { color: #64748b; font-weight: 600; margin-bottom: 24px; }
+        .dm-actions { display: flex; gap: 12px; }
+        .btn-del-confirm { flex: 1; padding: 14px; border-radius: 12px; border: none; background: #dc2626; color: white; font-weight: 800; cursor: pointer; }
+        .btn-del-confirm:hover { background: #b91c1c; }
+
+        /* DETAIL MODAL SPECIAL */
+        .detail-modal { padding: 0; overflow: hidden; max-width: 700px; }
+        .detail-modal .dm-header { position: relative; height: 350px; }
+        .detail-modal .dm-img { width: 100%; height: 100%; background-size: cover; background-position: center; }
+        .detail-modal .dm-close { position: absolute; top: 20px; right: 20px; z-index: 10; background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 50%; font-weight: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .detail-modal .dm-body { padding: 40px; }
+        .detail-modal .dm-title { font-size: 2rem; font-weight: 900; color: #1e293b; margin: 15px 0 25px; line-height: 1.2; }
+        .detail-modal .dm-content { font-size: 1.1rem; color: #475569; line-height: 1.8; }
+        .detail-modal .nc-date { font-size: 0.9rem; }
+
+        .b-empty { text-align: center; padding: 80px 20px; background: white; border-radius: 24px; border: 2px dashed #e2e8f0; }
+
+        .b-empty { text-align: center; padding: 80px 20px; background: white; border-radius: 24px; border: 2px dashed #e2e8f0; }
+        .be-icon { font-size: 3rem; margin-bottom: 16px; }
+        .b-empty h3 { color: #1e293b; font-weight: 800; margin-bottom: 8px; }
+        .b-empty p { color: #94a3b8; font-weight: 600; }
+
+        @media (max-width: 860px) {
+          .b-header h1 { font-size: 2.5rem; }
+          .b-grid { grid-template-columns: 1fr; }
+          .form-row { grid-template-columns: 1fr; }
+        }
+      `}} />
+    </div>
+  );
+};
+
+export default Berita;
