@@ -1162,7 +1162,7 @@ const Rekapitulasi = () => {
           @page { size: A4 landscape; margin: 1cm; }
           body { background: white !important; }
           .rek-wrap { padding: 0; width: 100%; max-width: 100%; background: white !important; }
-          .rek-top, .filter-bar, .td-opsi, .th-aksi, .bulk-action-bar, .import-box, .modal-overlay { display: none !important; }
+          .rek-top, .filter-bar, .td-opsi, .th-aksi, .bulk-action-bar, .import-box, .modal-overlay:not(.report-overlay) { display: none !important; }
           
           .print-header-only { 
             display: flex !important; justify-content: space-between; align-items: center;
@@ -1716,7 +1716,7 @@ const PanelKeuangan = ({ stats, transactions, currentMonth, onDeleteTrans, onClo
         @media print {
           @page { size: portrait; margin: 1cm; }
           nav, .rek-top, .stat-iuran-row, .filter-bar, .tabel-container, .bk-footer, 
-          .bk-filter-tabs, .bk-search-row, .btn-del-mini, .bk-close-btn { display: none !important; }
+          .bk-filter-tabs, .bk-search-row, .btn-del-mini, .bk-close-btn, .print-header-only { display: none !important; }
           
           .report-overlay { position: static !important; inset: auto !important; background: white !important; padding: 0 !important; display: block !important; overflow: visible !important; }
           .buku-kas-box { 

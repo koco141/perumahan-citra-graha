@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Rekapitulasi from './pages/Rekapitulasi';
 import Keamanan from './pages/Keamanan';
 import Berita from './pages/Berita';
+import BeritaDetail from './pages/BeritaDetail';
 import Login from './pages/Login';
 import SuperAdmin from './pages/SuperAdmin';
 import Navbar from './components/Navbar';
@@ -173,6 +174,7 @@ function AppShell() {
         {/* PUBLIC ROUTES */}
         <Route path="/" element={<Home />} />
         <Route path="/berita" element={<Berita />} />
+        <Route path="/berita/:id" element={<BeritaDetail />} />
         <Route path="/login" element={<Login />} />
 
         {/* PROTECTED ROUTES (CITRA RESIDENTS & STAFF) */}

@@ -100,6 +100,7 @@ export const deleteGuest = (id) => fetch(`${BASE_URL}/guests/${id}`, {
 
 // NEWS
 export const fetchNews = () => safeFetch(`${BASE_URL}/news`);
+export const fetchNewsById = (id) => fetch(`${BASE_URL}/news/${id}`, { headers: getAuthHeaders() }).then(res => res.json());
 export const saveNews = (data) => fetch(`${BASE_URL}/news`, {
   method: 'POST',
   headers: getAuthHeaders(),

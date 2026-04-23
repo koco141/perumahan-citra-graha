@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { fetchNews, saveNews, deleteNews } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Berita = () => {
+  const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('Semua');
   const categories = ['Semua', 'Pengumuman', 'Kegiatan', 'Warga'];
 
@@ -13,8 +15,6 @@ const Berita = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDelModalOpen, setIsDelModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [selectedNews, setSelectedNews] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const canManage = user?.role === 'pengurus' || user?.role === 'superadmin';
   const [formData, setFormData] = useState({ title: '', category: 'Pengumuman', desc: '', img: '' });
@@ -82,8 +82,7 @@ const Berita = () => {
   };
 
   const openDetail = (item) => {
-    setSelectedNews(item);
-    setIsDetailOpen(true);
+    navigate(`/berita/${item.id}`);
   };
 
   const handleDelete = async () => {
@@ -247,28 +246,6 @@ const Berita = () => {
         </div>
       )}
 
-      {/* DETAIL MODAL */}
-      {isDetailOpen && selectedNews && (
-        <div className="b-modal-overlay" onClick={() => setIsDetailOpen(false)}>
-          <div className="b-modal detail-modal" onClick={e => e.stopPropagation()}>
-            <div className="dm-header">
-              <button className="dm-close" onClick={() => setIsDetailOpen(false)}>✕</button>
-              <div className="dm-img" style={{backgroundImage: `url(${selectedNews.img})`}}></div>
-              <span className={`nc-cat ${selectedNews.category.toLowerCase()}`}>{selectedNews.category}</span>
-            </div>
-            <div className="dm-body">
-              <span className="nc-date">📅 {selectedNews.date}</span>
-              <h2 className="dm-title">{selectedNews.title}</h2>
-              <div className="dm-content">
-                {selectedNews.desc.split('\n').map((para, i) => (
-                  <p key={i}>{para}</p>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* DELETE CONFIRMATION MODAL */}
       {isDelModalOpen && (
         <div className="b-modal-overlay">
@@ -376,16 +353,6 @@ const Berita = () => {
         .dm-actions { display: flex; gap: 12px; }
         .btn-del-confirm { flex: 1; padding: 14px; border-radius: 12px; border: none; background: #dc2626; color: white; font-weight: 800; cursor: pointer; }
         .btn-del-confirm:hover { background: #b91c1c; }
-
-        /* DETAIL MODAL SPECIAL */
-        .detail-modal { padding: 0; overflow: hidden; max-width: 700px; }
-        .detail-modal .dm-header { position: relative; height: 350px; }
-        .detail-modal .dm-img { width: 100%; height: 100%; background-size: cover; background-position: center; }
-        .detail-modal .dm-close { position: absolute; top: 20px; right: 20px; z-index: 10; background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 50%; font-weight: 900; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .detail-modal .dm-body { padding: 40px; }
-        .detail-modal .dm-title { font-size: 2rem; font-weight: 900; color: #1e293b; margin: 15px 0 25px; line-height: 1.2; }
-        .detail-modal .dm-content { font-size: 1.1rem; color: #475569; line-height: 1.8; }
-        .detail-modal .nc-date { font-size: 0.9rem; }
 
         .b-empty { text-align: center; padding: 80px 20px; background: white; border-radius: 24px; border: 2px dashed #e2e8f0; }
 
