@@ -54,7 +54,9 @@ export const initDB = async () => {
       category TEXT,
       "desc" TEXT,
       img TEXT,
-      date TEXT
+      date TEXT,
+      author TEXT,
+      img_caption TEXT
     )
   `);
 
