@@ -2,6 +2,41 @@ const BASE_URL = window.location.hostname === 'localhost' || window.location.hos
   ? 'http://localhost:5000/api' 
   : '/api';
 
+export const getRelativeTime = (dateString) => {
+  if (!dateString) return '';
+  
+  // Parse date from "D MMMM YYYY" format to Date object if needed
+  // But wait, it's better if we store ISO string in the DB.
+  // Currently we store formatted string. Let's handle both.
+  let date;
+  if (dateString.includes('T')) {
+    date = new Date(dateString);
+  } else {
+    // Basic fallback for old format
+    return dateString;
+  }
+
+  const now = new Date();
+  const diffInMs = now - date;
+  const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+  if (diffInDays > 2) {
+    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  const diffInHours = diffInMs / (1000 * 60 * 60);
+  if (diffInHours >= 1) {
+    return `${Math.floor(diffInHours)} jam yang lalu`;
+  }
+
+  const diffInMinutes = diffInMs / (1000 * 60);
+  if (diffInMinutes >= 1) {
+    return `${Math.floor(diffInMinutes)} menit yang lalu`;
+  }
+
+  return 'Baru saja';
+};
+
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return {

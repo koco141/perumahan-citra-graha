@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchWarga, fetchNews, fetchPengurus, savePengurus } from '../api/api';
+import { fetchWarga, fetchNews, fetchPengurus, savePengurus, getRelativeTime } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
 
@@ -151,7 +151,7 @@ const Home = () => {
                   <span className={`h-nc-cat ${item.category.toLowerCase()}`}>{item.category}</span>
                 </div>
                 <div className="h-nc-content">
-                  <span className="h-nc-date">📅 {item.date}</span>
+                  <span className="h-nc-date">📅 {getRelativeTime(item.date)}</span>
                   <h3 className="h-nc-title">{item.title}</h3>
                   <p className="h-nc-desc">{item.desc}</p>
                 </div>

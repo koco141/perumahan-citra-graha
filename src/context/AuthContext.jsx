@@ -16,9 +16,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const validateToken = async (t) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/me', {
+      const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:5000/api' 
+        : '/api';
+      const res = await fetch(`${BASE_URL}/auth/me`, {
         headers: { 'Authorization': `Bearer ${t}` }
       });
       if (res.ok) {

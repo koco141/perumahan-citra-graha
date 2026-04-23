@@ -311,15 +311,16 @@ app.get('/api/news/:id', async (req, res) => {
 });
 
 app.post('/api/news', async (req, res) => {
-  const { id, title, category, desc, img, date } = req.body;
+  const { id, title, category, desc, img, date, author, imgCaption } = req.body;
   try {
     await query(
-      `INSERT INTO news (id, title, category, "desc", img, date)
-       VALUES ($1,$2,$3,$4,$5,$6)
+      `INSERT INTO news (id, title, category, "desc", img, date, author, img_caption)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        ON CONFLICT (id) DO UPDATE SET
          title=EXCLUDED.title, category=EXCLUDED.category,
-         "desc"=EXCLUDED."desc", img=EXCLUDED.img, date=EXCLUDED.date`,
-      [id, title, category, desc, img, date]
+         "desc"=EXCLUDED."desc", img=EXCLUDED.img, date=EXCLUDED.date,
+         author=EXCLUDED.author, img_caption=EXCLUDED.img_caption`,
+      [id, title, category, desc, img, date, author, imgCaption]
     );
     res.json({ success: true });
   } catch (err) {

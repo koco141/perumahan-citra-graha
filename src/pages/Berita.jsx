@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchNews, saveNews, deleteNews } from '../api/api';
+import { fetchNews, saveNews, deleteNews, getRelativeTime } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,7 +17,7 @@ const Berita = () => {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const canManage = user?.role === 'pengurus' || user?.role === 'superadmin';
-  const [formData, setFormData] = useState({ title: '', category: 'Pengumuman', desc: '', img: '' });
+  const [formData, setFormData] = useState({ title: '', category: 'Pengumuman', desc: '', img: '', author: '', imgCaption: '' });
   const [error, setError] = useState('');
 
   // ── PERSISTENCE: API ───────────────────────────────────────────────────────
@@ -64,14 +64,21 @@ const Berita = () => {
 
   const openAddModal = () => {
     setEditingId(null);
-    setFormData({ title: '', category: 'Pengumuman', desc: '', img: '' });
+    setFormData({ title: '', category: 'Pengumuman', desc: '', img: '', author: user?.nama || '', imgCaption: '' });
     setError('');
     setIsModalOpen(true);
   };
 
   const openEditModal = (item) => {
     setEditingId(item.id);
-    setFormData({ title: item.title, category: item.category, desc: item.desc, img: item.img });
+    setFormData({ 
+      title: item.title, 
+      category: item.category, 
+      desc: item.desc, 
+      img: item.img,
+      author: item.author || '',
+      imgCaption: item.img_caption || item.imgCaption || ''
+    });
     setError('');
     setIsModalOpen(true);
   };
@@ -98,15 +105,15 @@ const Berita = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.desc || !formData.img) {
-      setError('Semua field harus diisi!');
+    if (!formData.title || !formData.desc || !formData.img || !formData.author || !formData.imgCaption) {
+      setError('Semua field wajib diisi, termasuk Penulis dan Keterangan Gambar!');
       return;
     }
 
     const newsData = {
       id: editingId || String(Date.now()),
       ...formData,
-      date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+      date: new Date().toISOString()
     };
 
     try {
@@ -115,7 +122,7 @@ const Berita = () => {
       await loadNews();
       setIsModalOpen(false);
       setEditingId(null);
-      setFormData({ title: '', category: 'Pengumuman', desc: '', img: '' });
+      setFormData({ title: '', category: 'Pengumuman', desc: '', img: '', author: '', imgCaption: '' });
       setError('');
     } catch (err) {
       setError("Gagal menyimpan berita. Periksa koneksi server.");
@@ -160,7 +167,7 @@ const Berita = () => {
                 <span className={`nc-cat ${item.category.toLowerCase()}`}>{item.category}</span>
               </div>
               <div className="nc-content">
-                <span className="nc-date">📅 {item.date}</span>
+                <span className="nc-date">📅 {getRelativeTime(item.date)}</span>
                 <h3 className="nc-title">{item.title}</h3>
                 <p className="nc-desc">{item.desc}</p>
                 <div className="nc-footer">
@@ -224,6 +231,27 @@ const Berita = () => {
                   <label>Gambar Berita</label>
                   <input type="file" accept="image/*" onChange={handleFileChange} />
                   <small style={{color: '#64748b', fontSize: '0.7rem', marginTop: '4px', fontWeight: 600}}>* Maksimal 1 MB (PNG/JPG)</small>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Penulis / Penyusun</label>
+                  <input 
+                    type="text" 
+                    placeholder="Contoh: Tim Citragraha"
+                    value={formData.author}
+                    onChange={e => setFormData({...formData, author: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Keterangan Gambar (Caption)</label>
+                  <input 
+                    type="text" 
+                    placeholder="Contoh: Ilustrasi kegiatan warga"
+                    value={formData.imgCaption}
+                    onChange={e => setFormData({...formData, imgCaption: e.target.value})}
+                  />
                 </div>
               </div>
 

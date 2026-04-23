@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchNewsById } from '../api/api';
-import { ArrowLeft, Calendar, Tag, Share2, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Share2, Copy, Check } from 'lucide-react';
 
 const BeritaDetail = () => {
   const { id } = useParams();
@@ -28,7 +28,7 @@ const BeritaDetail = () => {
   }, [id]);
 
   const handleShare = () => {
-    if (navigator.share) {
+    if (news && navigator.share) {
       navigator.share({
         title: news.title,
         text: news.desc.substring(0, 100) + '...',
@@ -45,16 +45,28 @@ const BeritaDetail = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const formatFullDate = (dateString) => {
+    if (!dateString) return '';
+    const date = dateString.includes('T') ? new Date(dateString) : new Date();
+    return date.toLocaleDateString('id-ID', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) + ' WIB';
+  };
+
   if (loading) return (
-    <div className="bd-loading">
+    <div className="detik-loading">
       <div className="spinner"></div>
       <p>Memuat berita...</p>
     </div>
   );
 
   if (error || !news) return (
-    <div className="bd-error">
-      <div className="be-icon">❌</div>
+    <div className="detik-error">
       <h2>Oops!</h2>
       <p>{error || 'Berita tidak ditemukan.'}</p>
       <button onClick={() => navigate('/berita')} className="btn-back">Kembali ke Berita</button>
@@ -62,114 +74,103 @@ const BeritaDetail = () => {
   );
 
   return (
-    <div className="bd-container">
-      <div className="bd-content-wrap">
+    <div className="detik-container">
+      <div className="detik-wrap">
         {/* Navigation */}
-        <button className="bd-back-nav" onClick={() => navigate('/berita')}>
-          <ArrowLeft size={20} />
-          <span>Kembali</span>
+        <button className="detik-back" onClick={() => navigate('/berita')}>
+          <ArrowLeft size={18} /> Kembali
         </button>
 
-        {/* Hero Image */}
-        <div className="bd-hero">
-          <div className="bd-hero-img" style={{ backgroundImage: `url(${news.img})` }}></div>
-          <div className="bd-hero-overlay"></div>
-          <div className="bd-hero-info">
-             <span className={`nc-cat ${news.category.toLowerCase()}`}>{news.category}</span>
-             <h1 className="bd-title">{news.title}</h1>
-             <div className="bd-meta">
-                <span className="bd-meta-item"><Calendar size={16} /> {news.date}</span>
-                <span className="bd-meta-item"><Tag size={16} /> {news.category}</span>
-             </div>
-          </div>
-        </div>
-
-        {/* Article Body */}
-        <div className="bd-body">
-          <div className="bd-main">
-            <div className="bd-article">
-              {news.desc.split('\n').map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
+        <article className="detik-article">
+          {/* Header Info */}
+          <header className="detik-header">
+            <h1 className="detik-title">{news.title}</h1>
+            
+            <div className="detik-meta-top">
+              <span className="detik-author">{news.author || 'Tim Citragraha'}</span>
+              <span className="detik-sep">-</span>
+              <span className="detik-category">{news.category}</span>
             </div>
             
-            {/* Share Section */}
-            <div className="bd-share-section">
-               <h3>Bagikan Berita Ini</h3>
-               <div className="bd-share-btns">
-                  <button className="share-btn native" onClick={handleShare}>
-                    <Share2 size={18} /> Bagikan
-                  </button>
-                  <button className={`share-btn copy ${copied ? 'success' : ''}`} onClick={copyToClipboard}>
-                    {copied ? <Check size={18} /> : <Copy size={18} />}
-                    {copied ? 'Tersalin!' : 'Salin Link'}
-                  </button>
-               </div>
+            <div className="detik-date">
+              {formatFullDate(news.date)}
+            </div>
+          </header>
+
+          {/* Main Image Section */}
+          <div className="detik-media">
+            <img src={news.img} alt={news.title} className="detik-main-img" />
+            <div className="detik-caption">
+              Foto: {news.img_caption || news.imgCaption || 'Ilustrasi Citragraha'}
             </div>
           </div>
 
-          {/* Sidebar / More Info could go here */}
-        </div>
+          {/* Article Body */}
+          <div className="detik-body">
+            {news.desc.split('\n').map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+
+          {/* Footer / Share */}
+          <div className="detik-footer">
+            <div className="detik-share-label">Bagikan Berita Ini:</div>
+            <div className="detik-share-btns">
+              <button className="detik-btn-share native" onClick={handleShare}>
+                <Share2 size={18} /> Sebarkan Berita
+              </button>
+              <button className={`detik-btn-share copy ${copied ? 'success' : ''}`} onClick={copyToClipboard}>
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+                {copied ? 'Link Tersalin!' : 'Salin Link'}
+              </button>
+            </div>
+          </div>
+        </article>
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
-        .bd-container { min-height: 100vh; background: #f8fafc; padding-bottom: 100px; }
-        .bd-content-wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .detik-container { background: white; min-height: 100vh; padding-bottom: 100px; font-family: 'Inter', sans-serif; }
+        .detik-wrap { max-width: 800px; margin: 0 auto; padding: 20px; }
         
-        .bd-back-nav { display: flex; align-items: center; gap: 8px; background: none; border: none; color: #64748b; font-weight: 700; cursor: pointer; margin-bottom: 24px; transition: 0.2s; padding: 8px 0; }
-        .bd-back-nav:hover { color: #1a6b5c; transform: translateX(-4px); }
+        .detik-back { display: flex; align-items: center; gap: 8px; background: none; border: none; color: #64748b; font-weight: 700; cursor: pointer; margin-bottom: 30px; transition: 0.2s; padding: 8px 0; font-size: 0.9rem; }
+        .detik-back:hover { color: #1a6b5c; transform: translateX(-4px); }
 
-        .bd-hero { position: relative; height: 450px; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.1); margin-bottom: 40px; }
-        .bd-hero-img { width: 100%; height: 100%; background-size: cover; background-position: center; }
-        .bd-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.8)); }
+        .detik-header { text-align: center; margin-bottom: 40px; }
+        .detik-title { font-size: 2.8rem; font-weight: 900; color: #1a6b5c; line-height: 1.2; margin-bottom: 20px; letter-spacing: -1px; }
         
-        .bd-hero-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px; color: white; }
-        .bd-title { 
-          font-size: 2.5rem; 
-          font-weight: 900; 
-          margin: 15px 0; 
-          line-height: 1.3; 
-          color: #1e293b; 
-          background: white; 
-          display: inline-block; 
-          padding: 8px 20px; 
-          border-radius: 12px;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
+        .detik-meta-top { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; font-size: 1.05rem; }
+        .detik-author { font-weight: 700; color: #334155; }
+        .detik-sep { color: #cbd5e0; }
+        .detik-category { font-weight: 800; color: #2563eb; }
         
-        .bd-meta { display: flex; gap: 20px; opacity: 0.9; }
-        .bd-meta-item { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: 600; }
+        .detik-date { color: #94a3b8; font-size: 0.95rem; font-weight: 500; }
 
-        .bd-body { background: white; border-radius: 32px; padding: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
-        .bd-article { font-size: 1.15rem; color: #334155; line-height: 1.8; margin-bottom: 50px; }
-        .bd-article p { margin-bottom: 24px; }
+        .detik-media { margin-bottom: 40px; }
+        .detik-main-img { width: 100%; border-radius: 4px; display: block; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .detik-caption { text-align: center; font-size: 0.85rem; color: #64748b; margin-top: 12px; font-weight: 500; font-style: italic; }
 
-        .bd-share-section { border-top: 1px solid #f1f5f9; padding-top: 30px; }
-        .bd-share-section h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; margin-bottom: 16px; }
-        .bd-share-btns { display: flex; gap: 12px; }
+        .detik-body { font-size: 1.25rem; color: #1e293b; line-height: 1.8; text-align: justify; margin-bottom: 60px; }
+        .detik-body p { margin-bottom: 28px; }
+
+        .detik-footer { border-top: 2px solid #f1f5f9; padding-top: 40px; text-align: center; }
+        .detik-share-label { font-weight: 800; color: #1e293b; margin-bottom: 20px; font-size: 1.1rem; }
+        .detik-share-btns { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
         
-        .share-btn { display: flex; align-items: center; gap: 10px; padding: 12px 24px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; border: none; }
-        .share-btn.native { background: #1a6b5c; color: white; }
-        .share-btn.native:hover { background: #145248; transform: translateY(-2px); }
-        .share-btn.copy { background: #f1f5f9; color: #475569; }
-        .share-btn.copy:hover { background: #e2e8f0; }
-        .share-btn.copy.success { background: #dcfce7; color: #166534; }
+        .detik-btn-share { display: flex; align-items: center; gap: 10px; padding: 14px 28px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; border: none; font-size: 1rem; }
+        .detik-btn-share.native { background: #1a6b5c; color: white; box-shadow: 0 10px 20px rgba(26,107,92,0.2); }
+        .detik-btn-share.native:hover { background: #145248; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(26,107,92,0.3); }
+        .detik-btn-share.copy { background: #f1f5f9; color: #475569; }
+        .detik-btn-share.copy:hover { background: #e2e8f0; }
+        .detik-btn-share.copy.success { background: #dcfce7; color: #166534; }
 
-        .bd-loading, .bd-error { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
+        .detik-loading, .detik-error { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1a6b5c; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .btn-back { margin-top: 20px; padding: 12px 24px; background: #1a6b5c; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; }
-        
-        .nc-cat { padding: 6px 14px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: white; }
-        .nc-cat.pengumuman { background: #ef4444; }
-        .nc-cat.kegiatan { background: #3b82f6; }
-        .nc-cat.warga { background: #10b981; }
-
         @media (max-width: 768px) {
-          .bd-hero { height: 350px; border-radius: 0; margin-left: -20px; margin-right: -20px; }
-          .bd-title { font-size: 1.8rem; }
-          .bd-body { padding: 30px 20px; border-radius: 0; margin-left: -20px; margin-right: -20px; }
+          .detik-title { font-size: 2rem; }
+          .detik-body { font-size: 1.15rem; text-align: left; }
+          .detik-wrap { padding: 15px; }
         }
       `}} />
     </div>
