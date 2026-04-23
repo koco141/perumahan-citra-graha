@@ -15,8 +15,7 @@ const Home = () => {
   const { user } = useAuth();
   const canManage = user?.role === 'pengurus' || user?.role === 'superadmin';
 
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [selectedNews, setSelectedNews] = useState(null);
+
 
 
   useEffect(() => {
@@ -79,8 +78,7 @@ const Home = () => {
   };
 
   const openNewsDetail = (item) => {
-    setSelectedNews(item);
-    setIsDetailOpen(true);
+    navigate(`/berita/${item.id}`);
   };
 
   const beritaTerkini = newsList.slice(0, 3);
@@ -269,26 +267,7 @@ const Home = () => {
         </div>
       </section>
 
-      {isDetailOpen && selectedNews && (
-        <div className="modal-overlay" onClick={() => setIsDetailOpen(false)}>
-          <div className="modal-box news-detail-modal" onClick={e => e.stopPropagation()}>
-            <div className="dm-header">
-              <button className="dm-close" onClick={() => setIsDetailOpen(false)}>✕</button>
-              <div className="dm-img" style={{backgroundImage: `url(${selectedNews.img})`}}></div>
-              <span className={`h-nc-cat ${selectedNews.category.toLowerCase()}`}>{selectedNews.category}</span>
-            </div>
-            <div className="dm-body">
-              <span className="h-nc-date">📅 {selectedNews.date}</span>
-              <h2 className="dm-title">{selectedNews.title}</h2>
-              <div className="dm-content">
-                {selectedNews.desc.split('\n').map((para, i) => (
-                  <p key={i}>{para}</p>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       <footer className="footer">
         <div className="footer-inner">
