@@ -56,7 +56,8 @@ export const initDB = async () => {
       img TEXT,
       date TEXT,
       author TEXT,
-      img_caption TEXT
+      img_caption TEXT,
+      views INTEGER DEFAULT 0
     )
   `);
 

@@ -314,14 +314,23 @@ app.post('/api/news', async (req, res) => {
   const { id, title, category, desc, img, date, author, imgCaption } = req.body;
   try {
     await query(
-      `INSERT INTO news (id, title, category, "desc", img, date, author, img_caption)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      `INSERT INTO news (id, title, category, "desc", img, date, author, img_caption, views)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, 0)
        ON CONFLICT (id) DO UPDATE SET
          title=EXCLUDED.title, category=EXCLUDED.category,
          "desc"=EXCLUDED."desc", img=EXCLUDED.img, date=EXCLUDED.date,
          author=EXCLUDED.author, img_caption=EXCLUDED.img_caption`,
       [id, title, category, desc, img, date, author, imgCaption]
     );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/news/:id/view', async (req, res) => {
+  try {
+    await query('UPDATE news SET views = views + 1 WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

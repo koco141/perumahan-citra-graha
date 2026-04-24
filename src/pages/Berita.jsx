@@ -16,9 +16,21 @@ const Berita = () => {
   const [isDelModalOpen, setIsDelModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+  const [stats, setStats] = useState({ totalViews: 0, topNews: [], catStats: {} });
   const canManage = user?.role === 'pengurus' || user?.role === 'superadmin';
   const [formData, setFormData] = useState({ title: '', category: 'Pengumuman', desc: '', img: '', author: '', imgCaption: '' });
   const [error, setError] = useState('');
+
+  const calculateStats = (newsData) => {
+    const total = newsData.reduce((acc, curr) => acc + (curr.views || 0), 0);
+    const sorted = [...newsData].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
+    const catMap = {};
+    newsData.forEach(item => {
+      catMap[item.category] = (catMap[item.category] || 0) + (item.views || 0);
+    });
+    setStats({ totalViews: total, topNews: sorted, catStats: catMap });
+  };
 
   // ── PERSISTENCE: API ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -30,6 +42,7 @@ const Berita = () => {
     try {
       const data = await fetchNews();
       setNews(data || []);
+      calculateStats(data || []);
     } catch (err) {
       console.error("Load failed:", err);
       setError("Gagal memuat berita");
@@ -138,7 +151,12 @@ const Berita = () => {
           <span className="b-badge">Info & Kabar Terkini</span>
           <h1>Berita & Pengumuman</h1>
           <p>Informasi terbaru dari lingkungan Perumahan Citragraha Tembung untuk seluruh warga.</p>
-          {canManage && <button className="btn-add-news" onClick={openAddModal}>+ Tambah Berita</button>}
+          {canManage && (
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '24px' }}>
+              <button className="btn-add-news" onClick={openAddModal}>+ Tambah Berita</button>
+              <button className="btn-stats-news" onClick={() => setIsStatsModalOpen(true)}>📊 Analisis Engagement</button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -165,6 +183,7 @@ const Berita = () => {
               <div className="nc-img-wrap">
                 <div className="nc-img" style={{backgroundImage: `url(${item.img})`}}></div>
                 <span className={`nc-cat ${item.category.toLowerCase()}`}>{item.category}</span>
+                {canManage && <span className="nc-views-badge">👁️ {item.views || 0}</span>}
               </div>
               <div className="nc-content">
                 <span className="nc-date">📅 {getRelativeTime(item.date)}</span>
@@ -289,8 +308,99 @@ const Berita = () => {
         </div>
       )}
 
+      {/* STATS MODAL */}
+      {isStatsModalOpen && (
+        <div className="b-modal-overlay">
+          <div className="b-modal stats-modal">
+            <div className="bm-header">
+              <h2>📊 Analisis Engagement</h2>
+              <button onClick={() => setIsStatsModalOpen(false)}>✕</button>
+            </div>
+            
+            <div className="stats-summary">
+              <div className="stat-card">
+                <span className="stat-label">Total Views</span>
+                <span className="stat-value">{stats.totalViews}</span>
+                <span className="stat-sub">Seluruh Berita</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Rata-rata</span>
+                <span className="stat-value">{news.length > 0 ? Math.round(stats.totalViews / news.length) : 0}</span>
+                <span className="stat-sub">Views / Post</span>
+              </div>
+            </div>
+
+            <div className="stats-section">
+              <h3>📈 Top 5 Berita Terpopuler</h3>
+              <div className="top-news-list">
+                {stats.topNews.map((n, i) => (
+                  <div key={n.id} className="top-news-item">
+                    <span className="tn-rank">#{i+1}</span>
+                    <div className="tn-info">
+                      <span className="tn-title">{n.title}</span>
+                      <span className="tn-meta">{n.category} • {getRelativeTime(n.date)}</span>
+                    </div>
+                    <span className="tn-views">{n.views || 0} views</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="stats-section">
+              <h3>📂 Engagement per Kategori</h3>
+              <div className="cat-stats-grid">
+                {Object.entries(stats.catStats).map(([cat, v]) => (
+                  <div key={cat} className="cat-stat-bar-wrap">
+                    <div className="cs-label">
+                      <span>{cat}</span>
+                      <span>{v} views</span>
+                    </div>
+                    <div className="cs-bar-bg">
+                      <div className="cs-bar-fill" style={{ width: `${stats.totalViews > 0 ? (v / stats.totalViews) * 100 : 0}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bm-actions">
+              <button className="btn-save" style={{ width: '100%' }} onClick={() => setIsStatsModalOpen(false)}>Selesai</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style dangerouslySetInnerHTML={{ __html: `
         .berita-container { min-height: 100vh; background: #f8fafc; padding-bottom: 80px; }
+        
+        .btn-stats-news { margin-top: 24px; background: rgba(255,255,255,0.2); color: white; padding: 12px 28px; border-radius: 12px; border: 2px solid white; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.2s; backdrop-filter: blur(10px); }
+        .btn-stats-news:hover { background: white; color: #1a6b5c; transform: scale(1.05); }
+
+        .nc-views-badge { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; backdrop-filter: blur(4px); z-index: 2; }
+
+        .stats-modal { max-width: 700px; max-height: 90vh; overflow-y: auto; }
+        .stats-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #f1f5f9; padding: 20px; border-radius: 20px; text-align: center; border: 1px solid #e2e8f0; }
+        .stat-label { display: block; font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-value { display: block; font-size: 2.5rem; font-weight: 900; color: #1a6b5c; line-height: 1; }
+        .stat-sub { font-size: 0.75rem; color: #94a3b8; font-weight: 600; margin-top: 4px; display: block; }
+
+        .stats-section { margin-bottom: 30px; }
+        .stats-section h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        
+        .top-news-list { display: flex; flex-direction: column; gap: 12px; }
+        .top-news-item { display: flex; align-items: center; gap: 15px; padding: 12px; background: white; border: 1px solid #f1f5f9; border-radius: 12px; }
+        .tn-rank { font-weight: 900; color: #cbd5e1; font-size: 1.2rem; min-width: 30px; }
+        .tn-info { flex-grow: 1; display: flex; flex-direction: column; }
+        .tn-title { font-weight: 700; color: #1e293b; font-size: 0.95rem; }
+        .tn-meta { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+        .tn-views { font-weight: 800; color: #1a6b5c; font-size: 0.85rem; background: #e8f8f6; padding: 4px 8px; border-radius: 6px; }
+
+        .cat-stats-grid { display: flex; flex-direction: column; gap: 12px; }
+        .cat-stat-bar-wrap { width: 100%; }
+        .cs-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 6px; }
+        .cs-bar-bg { height: 10px; background: #f1f5f9; border-radius: 5px; overflow: hidden; }
+        .cs-bar-fill { height: 100%; background: linear-gradient(90deg, #1a6b5c, #2dd4bf); border-radius: 5px; transition: width 1s ease-out; }
         
         .b-header {
           height: 400px;

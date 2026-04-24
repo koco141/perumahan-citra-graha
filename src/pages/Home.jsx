@@ -149,6 +149,7 @@ const Home = () => {
               <div key={item.id} className="h-news-card" onClick={() => openNewsDetail(item)} style={{cursor: 'pointer'}}>
                 <div className="h-nc-img" style={{backgroundImage: `url(${item.img})`}}>
                   <span className={`h-nc-cat ${item.category.toLowerCase()}`}>{item.category}</span>
+                  {canManage && <span className="h-nc-views">👁️ {item.views || 0}</span>}
                 </div>
                 <div className="h-nc-content">
                   <span className="h-nc-date">📅 {getRelativeTime(item.date)}</span>
@@ -408,6 +409,7 @@ const Home = () => {
         .h-nc-cat.pengumuman { background: #ef4444; }
         .h-nc-cat.kegiatan { background: #3b82f6; }
         .h-nc-cat.warga { background: #10b981; }
+        .h-nc-views { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; backdrop-filter: blur(4px); }
         .h-nc-content { padding: 32px; }
         .h-nc-date { font-size: 0.85rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 12px; }
         .h-nc-title { font-size: 1.3rem; font-weight: 900; color: #1e293b; line-height: 1.4; margin-bottom: 12px; }

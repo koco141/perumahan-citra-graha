@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchNewsById } from '../api/api';
+import { fetchNewsById, incrementNewsView } from '../api/api';
 import { ArrowLeft, Share2, Copy, Check } from 'lucide-react';
 
 const BeritaDetail = () => {
@@ -17,6 +17,8 @@ const BeritaDetail = () => {
         const data = await fetchNewsById(id);
         if (data.error) throw new Error(data.error);
         setNews(data);
+        // Increment view
+        incrementNewsView(id);
       } catch (err) {
         setError('Berita tidak ditemukan atau terjadi kesalahan.');
       } finally {
@@ -94,6 +96,8 @@ const BeritaDetail = () => {
             
             <div className="detik-date">
               {formatFullDate(news.date)}
+              <span className="detik-sep">|</span>
+              <span className="detik-views">👁️ {news.views || 0} kali dibaca</span>
             </div>
           </header>
 
@@ -143,7 +147,8 @@ const BeritaDetail = () => {
         .detik-sep { color: #cbd5e0; }
         .detik-category { font-weight: 800; color: #2563eb; }
         
-        .detik-date { color: #94a3b8; font-size: 0.95rem; font-weight: 500; }
+        .detik-date { color: #94a3b8; font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .detik-views { font-weight: 700; color: #64748b; }
 
         .detik-media { margin-bottom: 40px; }
         .detik-main-img { width: 100%; border-radius: 4px; display: block; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }

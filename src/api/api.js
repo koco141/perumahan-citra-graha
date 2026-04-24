@@ -145,6 +145,10 @@ export const deleteNews = (id) => fetch(`${BASE_URL}/news/${id}`, {
   method: 'DELETE',
   headers: getAuthHeaders()
 }).then(res => res.json()).catch(() => ({error: true}));
+export const incrementNewsView = (id) => fetch(`${BASE_URL}/news/${id}/view`, {
+  method: 'POST',
+  headers: getAuthHeaders()
+}).then(res => res.json()).catch(() => ({error: true}));
 
 // PENGURUS
 export const fetchPengurus = () => safeFetch(`${BASE_URL}/pengurus`);
