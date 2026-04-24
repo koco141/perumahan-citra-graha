@@ -14,7 +14,7 @@ db.serialize(() => {
 
   // Seed Pengurus
   db.run(`INSERT OR IGNORE INTO pengurus (id, nama, jabatan, no) VALUES 
-    ('1', 'Suryo', 'Ketua Perumahan', '08123456789'),
+    ('1', 'SYAHRUL', 'Ketua Pengurus', '08123456789'),
     ('2', 'Budi', 'Sekretaris', '08123456790')
   `);
   

@@ -32,7 +32,7 @@ const Home = () => {
       setNewsList(nData);
 
       const REQUIRED_JABATAN = [
-        { id: '1', nama: 'SURYO', jabatan: 'Ketua Perumahan', no: '08123456789' },
+        { id: '1', nama: 'SYAHRUL', jabatan: 'Ketua Pengurus', no: '08123456789' },
         { id: '2', nama: 'BUDI', jabatan: 'Sekretaris', no: '08123456790' },
         { id: '3', nama: 'DEDI', jabatan: 'Bendahara', no: '087822595073' },
       ];
@@ -41,18 +41,20 @@ const Home = () => {
       let needsSave = false;
 
       for (const req of REQUIRED_JABATAN) {
-        if (!updatedPData.find(p => p.jabatan === req.jabatan)) {
+        if (!updatedPData.find(p => p.id === req.id)) {
           await savePengurus(req);
           updatedPData.push(req);
           needsSave = true;
         }
       }
 
+      const sortById = (data) => [...data].sort((a, b) => parseInt(a.id) - parseInt(b.id));
+
       if (needsSave) {
         const finalPData = await fetchPengurus();
-        setPengurusData(finalPData);
+        setPengurusData(sortById(finalPData));
       } else {
-        setPengurusData(updatedPData);
+        setPengurusData(sortById(updatedPData));
       }
     } catch (err) {
       console.error("Home load error:", err);
