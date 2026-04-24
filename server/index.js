@@ -293,7 +293,11 @@ app.delete('/api/guests/:id', async (req, res) => {
 // ── NEWS ───────────────────────────────────────────────────────────────────
 app.get('/api/news', async (req, res) => {
   try {
-    const { rows } = await query('SELECT * FROM news ORDER BY date DESC');
+    const { rows } = await query(`
+      SELECT n.*, (SELECT COUNT(*) FROM comments c WHERE c.news_id = n.id) as comment_count 
+      FROM news n 
+      ORDER BY n.date DESC
+    `);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -302,8 +306,12 @@ app.get('/api/news', async (req, res) => {
 
 app.get('/api/news/:id', async (req, res) => {
   try {
-    const { rows } = await query('SELECT * FROM news WHERE id = $1', [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ error: 'Berita tidak ditemukan' });
+    const { rows } = await query(`
+      SELECT n.*, (SELECT COUNT(*) FROM comments c WHERE c.news_id = n.id) as comment_count 
+      FROM news n 
+      WHERE n.id = $1
+    `, [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });

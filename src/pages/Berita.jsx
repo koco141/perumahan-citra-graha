@@ -184,7 +184,11 @@ const Berita = () => {
               <div className="nc-img-wrap">
                 <div className="nc-img" style={{backgroundImage: `url(${item.img})`}}></div>
                 <span className={`nc-cat ${item.category.toLowerCase()}`}>{item.category}</span>
-                {canManage && <span className="nc-views-badge">👁️ {item.views || 0}</span>}
+                <div className="nc-stats-badge">
+                  <span>👍 {item.likes || 0}</span>
+                  <span>💬 {item.comment_count || 0}</span>
+                  {canManage && <span>👁️ {item.views || 0}</span>}
+                </div>
               </div>
               <div className="nc-content">
                 <span className="nc-date">📅 {getRelativeTime(item.date)}</span>
@@ -377,7 +381,23 @@ const Berita = () => {
         .btn-stats-news { margin-top: 24px; background: rgba(255,255,255,0.2); color: white; padding: 12px 28px; border-radius: 12px; border: 2px solid white; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.2s; backdrop-filter: blur(10px); }
         .btn-stats-news:hover { background: white; color: #1a6b5c; transform: scale(1.05); }
 
-        .nc-views-badge { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; backdrop-filter: blur(4px); z-index: 2; }
+        .nc-stats-badge { 
+          position: absolute; 
+          top: 16px; 
+          right: 16px; 
+          background: rgba(0,0,0,0.6); 
+          color: white; 
+          padding: 6px 12px; 
+          border-radius: 12px; 
+          font-size: 0.7rem; 
+          font-weight: 700; 
+          backdrop-filter: blur(8px); 
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          z-index: 2;
+        }
+        .nc-stats-badge span { display: flex; align-items: center; gap: 4px; }
 
         .stats-modal { max-width: 700px; max-height: 90vh; overflow-y: auto; }
         .stats-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }

@@ -62,6 +62,8 @@ export const initDB = async () => {
     )
   `);
 
+  await query(`ALTER TABLE news ADD COLUMN IF NOT EXISTS likes INTEGER DEFAULT 0`);
+
   await query(`
     CREATE TABLE IF NOT EXISTS comments (
       id TEXT PRIMARY KEY,
