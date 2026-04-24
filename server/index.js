@@ -338,7 +338,7 @@ app.post('/api/news', async (req, res) => {
 
 app.post('/api/news/:id/view', async (req, res) => {
   try {
-    await query('UPDATE news SET views = views + 1 WHERE id = $1', [req.params.id]);
+    await query('UPDATE news SET views = COALESCE(views, 0) + 1 WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -347,7 +347,7 @@ app.post('/api/news/:id/view', async (req, res) => {
 
 app.post('/api/news/:id/like', async (req, res) => {
   try {
-    await query('UPDATE news SET likes = likes + 1 WHERE id = $1', [req.params.id]);
+    await query('UPDATE news SET likes = COALESCE(likes, 0) + 1 WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

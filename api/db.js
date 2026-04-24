@@ -54,7 +54,23 @@ export const initDB = async () => {
       category TEXT,
       "desc" TEXT,
       img TEXT,
-      date TEXT
+      date TEXT,
+      author TEXT,
+      img_caption TEXT,
+      views INTEGER DEFAULT 0,
+      likes INTEGER DEFAULT 0
+    )
+  `);
+
+  await query(`ALTER TABLE news ADD COLUMN IF NOT EXISTS likes INTEGER DEFAULT 0`);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS comments (
+      id TEXT PRIMARY KEY,
+      news_id TEXT,
+      nama TEXT,
+      content TEXT,
+      date TIMESTAMP DEFAULT NOW()
     )
   `);
 

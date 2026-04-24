@@ -185,7 +185,7 @@ const Berita = () => {
                 <div className="nc-img" style={{backgroundImage: `url(${item.img})`}}></div>
                 <span className={`nc-cat ${item.category.toLowerCase()}`}>{item.category}</span>
                 <div className="nc-stats-badge">
-                  <span>👍 {item.likes || 0}</span>
+                  <span>❤️ {item.likes || 0}</span>
                   <span>💬 {item.comment_count || 0}</span>
                   {canManage && <span>👁️ {item.views || 0}</span>}
                 </div>

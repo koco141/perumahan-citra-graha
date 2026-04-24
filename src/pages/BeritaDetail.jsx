@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchNewsById, incrementNewsView, incrementNewsLike, fetchComments, postComment } from '../api/api';
-import { ArrowLeft, Share2, Copy, Check, ThumbsUp, MessageCircle, Send } from 'lucide-react';
+import { ArrowLeft, Share2, Copy, Check, Heart, MessageCircle, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const BeritaDetail = () => {
@@ -154,7 +154,7 @@ const BeritaDetail = () => {
           {/* Interactions (Like/Comment Count) */}
           <div className="detik-interactions">
             <button className={`detik-btn-like ${isLiking ? 'liking' : ''}`} onClick={handleLike}>
-              <ThumbsUp size={20} />
+              <Heart size={20} fill={news.likes > 0 ? "#1a6b5c" : "none"} />
               <span>{news.likes || 0} Suka</span>
             </button>
             <div className="detik-comment-count">

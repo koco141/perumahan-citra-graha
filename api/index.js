@@ -293,7 +293,11 @@ app.delete('/api/guests/:id', async (req, res) => {
 // ── NEWS ───────────────────────────────────────────────────────────────────
 app.get('/api/news', async (req, res) => {
   try {
-    const { rows } = await query('SELECT * FROM news ORDER BY date DESC');
+    const { rows } = await query(`
+      SELECT n.*, (SELECT COUNT(*) FROM comments c WHERE c.news_id = n.id) as comment_count 
+      FROM news n 
+      ORDER BY n.date DESC
+    `);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -302,7 +306,11 @@ app.get('/api/news', async (req, res) => {
 
 app.get('/api/news/:id', async (req, res) => {
   try {
-    const { rows } = await query('SELECT * FROM news WHERE id = $1', [req.params.id]);
+    const { rows } = await query(`
+      SELECT n.*, (SELECT COUNT(*) FROM comments c WHERE c.news_id = n.id) as comment_count 
+      FROM news n 
+      WHERE n.id = $1
+    `, [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Berita tidak ditemukan' });
     res.json(rows[0]);
   } catch (err) {
@@ -314,14 +322,52 @@ app.post('/api/news', async (req, res) => {
   const { id, title, category, desc, img, date, author, imgCaption } = req.body;
   try {
     await query(
-      `INSERT INTO news (id, title, category, "desc", img, date, author, img_caption)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      `INSERT INTO news (id, title, category, "desc", img, date, author, img_caption, views, likes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, 0, 0)
        ON CONFLICT (id) DO UPDATE SET
          title=EXCLUDED.title, category=EXCLUDED.category,
          "desc"=EXCLUDED."desc", img=EXCLUDED.img, date=EXCLUDED.date,
          author=EXCLUDED.author, img_caption=EXCLUDED.img_caption`,
       [id, title, category, desc, img, date, author, imgCaption]
     );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/news/:id/view', async (req, res) => {
+  try {
+    await query('UPDATE news SET views = COALESCE(views, 0) + 1 WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/news/:id/like', async (req, res) => {
+  try {
+    await query('UPDATE news SET likes = COALESCE(likes, 0) + 1 WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/news/:id/comments', async (req, res) => {
+  try {
+    const { rows } = await query('SELECT * FROM comments WHERE news_id = $1 ORDER BY date DESC', [req.params.id]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/news/:id/comments', async (req, res) => {
+  const { nama, content } = req.body;
+  const id = String(Date.now());
+  try {
+    await query('INSERT INTO comments (id, news_id, nama, content) VALUES ($1,$2,$3,$4)', [id, req.params.id, nama, content]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
