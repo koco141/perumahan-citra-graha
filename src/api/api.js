@@ -149,6 +149,16 @@ export const incrementNewsView = (id) => fetch(`${BASE_URL}/news/${id}/view`, {
   method: 'POST',
   headers: getAuthHeaders()
 }).then(res => res.json()).catch(() => ({error: true}));
+export const incrementNewsLike = (id) => fetch(`${BASE_URL}/news/${id}/like`, {
+  method: 'POST',
+  headers: getAuthHeaders()
+}).then(res => res.json()).catch(() => ({error: true}));
+export const fetchComments = (id) => safeFetch(`${BASE_URL}/news/${id}/comments`);
+export const postComment = (id, data) => fetch(`${BASE_URL}/news/${id}/comments`, {
+  method: 'POST',
+  headers: getAuthHeaders(),
+  body: JSON.stringify(data)
+}).then(res => res.json()).catch(() => ({error: true}));
 
 // PENGURUS
 export const fetchPengurus = () => safeFetch(`${BASE_URL}/pengurus`);

@@ -151,17 +151,11 @@ const Berita = () => {
           <span className="b-badge">Info & Kabar Terkini</span>
           <h1>Berita & Pengumuman</h1>
           <p>Informasi terbaru dari lingkungan Perumahan Citragraha Tembung untuk seluruh warga.</p>
-          {canManage && (
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '24px' }}>
-              <button className="btn-add-news" onClick={openAddModal}>+ Tambah Berita</button>
-              <button className="btn-stats-news" onClick={() => setIsStatsModalOpen(true)}>📊 Analisis Engagement</button>
-            </div>
-          )}
         </div>
       </div>
 
       <div className="b-body">
-        {/* FILTERS */}
+        {/* FILTERS & ADMIN ACTIONS */}
         <div className="b-filters-row">
           <div className="b-filters">
             {categories.map(cat => (
@@ -174,6 +168,13 @@ const Berita = () => {
               </button>
             ))}
           </div>
+
+          {canManage && (
+            <div className="b-admin-btns">
+              <button className="btn-add-news-small" onClick={openAddModal}>+ Tambah Berita</button>
+              <button className="btn-stats-news-small" onClick={() => setIsStatsModalOpen(true)}>📊 Analisis Engagement</button>
+            </div>
+          )}
         </div>
 
         {/* NEWS GRID */}
@@ -420,16 +421,20 @@ const Berita = () => {
         .b-badge { background: #ffd700; color: #1a6b5c; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: inline-block; }
         .b-header h1 { font-size: 3.5rem; font-weight: 900; margin: 10px 0; letter-spacing: -1.5px; color: #ffffff; text-shadow: 0 4px 10px rgba(0,0,0,0.4); }
         .b-header p { font-size: 1.2rem; opacity: 1; font-weight: 600; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-        .btn-add-news { margin-top: 24px; background: #fff; color: #1a6b5c; padding: 12px 28px; border-radius: 12px; border: none; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .btn-add-news:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
 
         .b-body { max-width: 1200px; margin: -50px auto 0; position: relative; z-index: 20; padding: 0 24px; }
         
-        .b-filters-row { display: flex; align-items: center; justify-content: center; margin-bottom: 32px; }
+        .b-filters-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; gap: 20px; flex-wrap: wrap; }
         .b-filters { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
         .b-filter-btn { padding: 12px 24px; background: white; border: 1px solid #e2e8f0; border-radius: 14px; font-size: 0.9rem; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; white-space: nowrap; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .b-filter-btn:hover { border-color: #1a6b5c; color: #1a6b5c; transform: translateY(-2px); }
         .b-filter-btn.active { background: #1a6b5c; color: white; border-color: #1a6b5c; box-shadow: 0 10px 20px rgba(26,107,92,0.2); }
+
+        .b-admin-btns { display: flex; gap: 10px; align-items: center; }
+        .btn-add-news-small { background: #1a6b5c; color: white; padding: 10px 20px; border-radius: 12px; border: none; font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(26,107,92,0.2); }
+        .btn-add-news-small:hover { transform: translateY(-2px); background: #145248; }
+        .btn-stats-news-small { background: white; color: #1a6b5c; padding: 10px 20px; border-radius: 12px; border: 2px solid #1a6b5c; font-size: 0.85rem; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-stats-news-small:hover { background: #f0fdfa; transform: translateY(-2px); }
 
         .b-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 32px; }
         
