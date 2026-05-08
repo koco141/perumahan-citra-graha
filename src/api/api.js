@@ -99,6 +99,7 @@ export const resetUserPassword = (id) => fetch(`${BASE_URL}/admin/users/${id}/re
 
 // WARGA
 export const fetchWarga = () => safeFetch(`${BASE_URL}/warga`);
+export const checkWargaPayment = (nama) => fetch(`${BASE_URL}/warga/check-payment/${encodeURIComponent(nama)}`, { headers: getAuthHeaders() }).then(res => res.json()).catch(() => ({ paid: false, found: false }));
 export const saveWarga = (data) => fetch(`${BASE_URL}/warga`, {
   method: 'POST',
   headers: getAuthHeaders(),

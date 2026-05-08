@@ -195,6 +195,50 @@ app.get('/api/warga', async (req, res) => {
   }
 });
 
+// Check payment status for a specific warga by name
+app.get('/api/warga/check-payment/:nama', async (req, res) => {
+  try {
+    const nama = decodeURIComponent(req.params.nama);
+    const { rows: wargaRows } = await query(
+      'SELECT * FROM warga WHERE LOWER(nama) = LOWER($1)',
+      [nama]
+    );
+    
+    // Also fetch bendahara info
+    const { rows: pengurusRows } = await query(
+      "SELECT * FROM pengurus WHERE LOWER(jabatan) LIKE '%bendahara%'"
+    );
+    const bendahara = pengurusRows[0] || null;
+    
+    if (wargaRows.length === 0) {
+      // Warga not found in payment records - treat as unpaid
+      return res.json({ found: false, paid: false, bendahara });
+    }
+    
+    const warga = wargaRows[0];
+    const bayar = JSON.parse(warga.bayar || '{}');
+    const now = new Date();
+    const currentYear = String(now.getFullYear());
+    const currentMonth = now.getMonth(); // 0-indexed
+    
+    const yearData = bayar[currentYear];
+    const isPaid = yearData && yearData[currentMonth] === true;
+    
+    return res.json({
+      found: true,
+      paid: isPaid,
+      wargaNama: warga.nama,
+      blok: warga.blok,
+      nomor: warga.nomor,
+      bulan: currentMonth,
+      tahun: currentYear,
+      bendahara
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/warga', async (req, res) => {
   const { id, blok, nama, bayar } = req.body;
   const nomor = req.body.nomor || req.body.rumah;

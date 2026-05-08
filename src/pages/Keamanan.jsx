@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchGuests, saveGuest, deleteGuest, fetchSecurityTasks, toggleSecurityTask, fetchPublicSatpams } from '../api/api';
+import { fetchGuests, saveGuest, deleteGuest, fetchSecurityTasks, toggleSecurityTask, fetchPublicSatpams, checkWargaPayment } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -16,6 +16,9 @@ const Keamanan = () => {
   });
   const { user } = useAuth();
   const canManage = user?.role === 'pengurus' || user?.role === 'superadmin' || user?.role === 'satpam';
+  const isWarga = user?.role === 'warga';
+
+  const [paymentStatus, setPaymentStatus] = useState({ checked: false, paid: true, bendahara: null });
   
   const now = new Date();
   const [filterMonth, setFilterMonth] = useState(MONTHS[now.getMonth()]);
@@ -30,6 +33,11 @@ const Keamanan = () => {
 
   useEffect(() => {
     loadData();
+    if (isWarga && user?.nama) {
+      checkWargaPayment(user.nama).then(res => {
+        setPaymentStatus({ checked: true, paid: res.paid, bendahara: res.bendahara });
+      });
+    }
   }, []);
 
   const loadData = async () => {
@@ -144,6 +152,56 @@ const Keamanan = () => {
     if (p.start < p.end) return currentHour >= p.start && currentHour < p.end;
     return currentHour >= p.start || currentHour < p.end;
   });
+
+  const BULAN_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const currentBulanName = BULAN_NAMES[now.getMonth()];
+  const currentTahun = now.getFullYear();
+
+  // Blocker for unpaid warga
+  if (isWarga && paymentStatus.checked && !paymentStatus.paid) {
+    const bendahara = paymentStatus.bendahara;
+    const waLink = bendahara?.no ? `https://wa.me/${bendahara.no.replace(/\D/g, '').replace(/^0/, '62')}` : '#';
+    return (
+      <div className="keamanan-container">
+        <div className="k-hero">
+          <div className="k-hero-content">
+            <span className="k-tag">Kawasan Terpadu & Aman</span>
+            <h1>Keamanan Lingkungan</h1>
+            <p>Sistem keamanan terintegrasi untuk kenyamanan seluruh warga Perumahan Citragraha Tembung.</p>
+          </div>
+        </div>
+        <div className="k-body">
+          <div className="payment-blocker-card">
+            <div className="pb-icon">🔒</div>
+            <h2 className="pb-title">Akses Ditolak</h2>
+            <p className="pb-subtitle">Iuran Bulan <strong>{currentBulanName} {currentTahun}</strong> Belum Terbayar</p>
+            <div className="pb-divider"></div>
+            <p className="pb-desc">Maaf <strong>{user?.nama}</strong>, Anda belum dapat mengakses halaman Keamanan karena iuran bulanan Anda untuk periode <strong>{currentBulanName} {currentTahun}</strong> belum tercatat lunas.</p>
+            <p className="pb-desc">Silakan segera melakukan pembayaran agar dapat kembali menggunakan fasilitas keamanan lingkungan.</p>
+            <div className="pb-contact-card">
+              <div className="pb-contact-header">
+                <span className="pb-contact-icon">💰</span>
+                <span className="pb-contact-label">Hubungi Bendahara</span>
+              </div>
+              {bendahara ? (
+                <div className="pb-contact-body">
+                  <div className="pb-contact-name">{bendahara.nama}</div>
+                  <div className="pb-contact-role">{bendahara.jabatan}</div>
+                  <a href={waLink} target="_blank" rel="noreferrer" className="pb-wa-btn">💬 Chat WhatsApp Bendahara</a>
+                </div>
+              ) : (
+                <div className="pb-contact-body">
+                  <p style={{color:'#94a3b8', fontStyle:'italic'}}>Data bendahara belum tersedia. Silakan hubungi pengurus perumahan.</p>
+                </div>
+              )}
+            </div>
+            <a href="/rekapitulasi" className="pb-link">📊 Lihat Status Iuran Saya →</a>
+          </div>
+        </div>
+        <style dangerouslySetInnerHTML={{ __html: blockerCSS }} />
+      </div>
+    );
+  }
 
   return (
     <div className="keamanan-container">
@@ -523,5 +581,56 @@ const Keamanan = () => {
     </div>
   );
 };
+
+const blockerCSS = `
+  .keamanan-container { min-height: 100vh; background: #f8fafc; font-family: 'Inter', sans-serif; }
+  .k-hero { background: linear-gradient(rgba(26,107,92,0.85), rgba(26,107,92,0.95)), url('https://images.unsplash.com/photo-1558002038-1055907df827'); background-size: cover; background-position: center; padding: 100px 24px; text-align: center; color: #fff !important; }
+  .k-tag { background: rgba(255,255,255,0.25); padding: 8px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 800; color: #fff; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.3); }
+  .k-hero h1 { font-size: 3.5rem; font-weight: 900; margin: 24px 0; color: #fff !important; text-shadow: 0 4px 15px rgba(0,0,0,0.4); letter-spacing: -1px; }
+  .k-hero p { font-size: 1.25rem; font-weight: 600; color: #f0fdf4 !important; text-shadow: 0 2px 10px rgba(0,0,0,0.5); max-width: 700px; margin: 0 auto; line-height: 1.6; }
+  .k-body { max-width: 700px; margin: -40px auto 0; padding: 0 24px 80px; }
+
+  .payment-blocker-card {
+    background: white; border-radius: 32px; padding: 56px 48px; text-align: center;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.1); border: 2px solid #fecaca;
+    animation: fadeInUp 0.6s ease-out;
+  }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  .pb-icon { font-size: 4rem; margin-bottom: 16px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); }
+  .pb-title { font-size: 2rem; font-weight: 900; color: #dc2626; margin: 0 0 8px; }
+  .pb-subtitle { font-size: 1.15rem; font-weight: 700; color: #1e293b; margin: 0 0 24px; }
+  .pb-divider { width: 80px; height: 4px; background: linear-gradient(90deg, #ef4444, #f97316); border-radius: 100px; margin: 0 auto 24px; }
+  .pb-desc { font-size: 1rem; color: #64748b; line-height: 1.8; font-weight: 500; margin: 0 0 12px; }
+  .pb-desc strong { color: #1e293b; font-weight: 800; }
+
+  .pb-contact-card {
+    background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 20px;
+    padding: 24px; margin: 32px 0 24px; text-align: center;
+  }
+  .pb-contact-header { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; }
+  .pb-contact-icon { font-size: 1.5rem; }
+  .pb-contact-label { font-size: 0.85rem; font-weight: 900; color: #166534; text-transform: uppercase; letter-spacing: 1px; }
+  .pb-contact-body { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .pb-contact-name { font-size: 1.3rem; font-weight: 900; color: #1e293b; }
+  .pb-contact-role { font-size: 0.85rem; font-weight: 700; color: #1a6b5c; margin-bottom: 12px; }
+  .pb-wa-btn {
+    display: inline-block; background: #25d366; color: white !important; padding: 14px 32px;
+    border-radius: 14px; font-weight: 800; text-decoration: none; font-size: 1rem;
+    transition: 0.3s; box-shadow: 0 8px 20px rgba(37,211,102,0.3);
+  }
+  .pb-wa-btn:hover { background: #128c7e; transform: translateY(-3px); box-shadow: 0 12px 25px rgba(37,211,102,0.4); }
+
+  .pb-link {
+    display: inline-block; margin-top: 8px; color: #1a6b5c; font-weight: 800;
+    text-decoration: none; font-size: 0.95rem; transition: 0.2s;
+  }
+  .pb-link:hover { color: #15574b; transform: translateX(5px); }
+
+  @media (max-width: 600px) {
+    .payment-blocker-card { padding: 36px 20px; }
+    .pb-title { font-size: 1.5rem; }
+    .k-hero h1 { font-size: 2rem; }
+  }
+`;
 
 export default Keamanan;
